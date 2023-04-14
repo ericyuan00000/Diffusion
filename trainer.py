@@ -50,10 +50,10 @@ class Trainer():
             self.model.eval()
             val_loss = 0
             for batch_data in iter(val_dataloader):
-                batch_X = batch_data['X']
-                batch_Z = batch_data['Z']
+                batch_X = batch_data['X'].to(self.device)
+                batch_Z = batch_data['Z'].to(self.device)
                 batch_H, batch_K = self.model.encode(batch_Z)
-                
+
                 batch_t = torch.rand(1, device=self.device).tile(batch_X.shape[0], batch_X.shape[1], 1)
                 batch_alpha = self.noise_schedule(batch_t)  # alpha(t), weight of data
                 batch_sigma = torch.sqrt(1 - batch_alpha**2)  # sigma(t), weight of noise
