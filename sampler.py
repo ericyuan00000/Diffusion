@@ -12,13 +12,13 @@ class Sampler():
 
     
     def sample(self, n_sample=100, n_step=10000):
-        X_t = torch.randn(n_sample, 2, 3).to(self.device)
-        Z = torch.zeros((n_sample, 2, 2)).to(self.device)
+        X_t = torch.randn((n_sample, 2, 3), device=self.device)
+        Z = torch.zeros((n_sample, 2, 2), device=self.device)
         Z[:, :, 1] = 1
         H, K = self.model.encode(Z)
         for step in range(n_step):
-            t_t = (1 - step / n_step) * torch.ones(X_t.shape[0], X_t.shape[1], 1)
-            t_s = (1 - (step + 1) / n_step) * torch.ones(X_t.shape[0], X_t.shape[1], 1)
+            t_t = (1 - step / n_step) * torch.ones((X_t.shape[0], X_t.shape[1], 1), device=self.device)
+            t_s = (1 - (step + 1) / n_step) * torch.ones((X_t.shape[0], X_t.shape[1], 1), device=self.device)
             alpha_t = self.noise_schedule(t_t)
             sigma_t = torch.sqrt(1 - alpha_t**2)
             alpha_s = self.noise_schedule(t_s)
