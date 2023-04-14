@@ -19,7 +19,7 @@ class Trainer():
         self.noise_schedule = noise_schedule    # alpha(t)
 
         
-    def train(self, train_dataloader, val_dataloader):
+    def train(self, train_dataloader, val_dataloader, device):
         train_losses = []
         val_losses = []
         
@@ -27,8 +27,8 @@ class Trainer():
             self.model.train()
             train_loss = []
             for batch_data in iter(train_dataloader):
-                batch_X = batch_data['X']
-                batch_Z = batch_data['Z']
+                batch_X = batch_data['X'].to(device)
+                batch_Z = batch_data['Z'].to(device)
                 batch_H, batch_K = self.model.encode(batch_Z)
                 
                 batch_t = torch.rand(1).tile(batch_X.shape[0], batch_X.shape[1], 1)
@@ -62,7 +62,7 @@ class Trainer():
                 loss = self.loss_func(pred_epsilon, batch_epsilon)
                 val_loss.append(loss.detach())
             val_losses.append(np.mean(val_loss))
-            
+
             print(f'Train loss: {np.mean(train_loss):.3f} - Val loss: {np.mean(val_loss):.3f}')
 
         return {'train_losses': train_losses, 'val_losses': val_losses}
