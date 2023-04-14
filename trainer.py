@@ -9,17 +9,19 @@ import matplotlib.pyplot as plt
 class Trainer():
     def __init__(self, 
                  model, 
+                 device,
                  noise_schedule=lambda t: (1 - 2e-5) * (1 - t**2) + 1e-5,
                  lr=1.0e-3,
                  epoch=1000):
         self.model = model
+        self.device = device
         self.optimizer = Adam(model.parameters(), lr=lr)
         self.epoch = epoch
         self.loss_func = nn.MSELoss()
         self.noise_schedule = noise_schedule    # alpha(t)
 
         
-    def train(self, train_dataloader, val_dataloader, device):
+    def train(self, train_dataloader, val_dataloader):
         train_losses = []
         val_losses = []
         
@@ -27,8 +29,8 @@ class Trainer():
             self.model.train()
             train_loss = []
             for batch_data in iter(train_dataloader):
-                batch_X = batch_data['X'].to(device)
-                batch_Z = batch_data['Z'].to(device)
+                batch_X = batch_data['X'].to(self.device)
+                batch_Z = batch_data['Z'].to(self.device)
                 batch_H, batch_K = self.model.encode(batch_Z)
                 
                 batch_t = torch.rand(1).tile(batch_X.shape[0], batch_X.shape[1], 1)

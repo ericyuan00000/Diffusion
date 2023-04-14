@@ -31,5 +31,5 @@ class Sampler():
             X_s = mu_Q + sigma_Q * noise
             X_t = X_s
 
-            print(step, f'H2 dist: {(X_t[:, 0, :]-X_t[:, 1, :]).norm(dim=1).mean():.2f} ± {(X_t[:, 0, :]-X_t[:, 1, :]).norm(dim=1).std():.2f}')
+            print(step, f'H2 dist: {(X_t[:, 0, :]-X_t[:, 1, :]).norm(dim=1).nanmean():.2f} ± {(X_t[:, 0, :]-X_t[:, 1, :]).norm(dim=1).nanstd():.2f}')
         return X_t
