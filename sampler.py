@@ -4,7 +4,7 @@ import torch
 class Sampler():
     def __init__(self, 
                  model, 
-                 noise_schedule):
+                 noise_schedule=lambda t: (1 - 2e-5) * (1 - t**2) + 1e-5):
         self.model = model
         self.noise_schedule = noise_schedule
 
