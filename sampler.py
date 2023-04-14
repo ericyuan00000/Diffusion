@@ -29,7 +29,7 @@ class Sampler():
             eps_t = self.model.forward(X_t, H, K)
             mu_Q = 1 / alpha_ts * X_t - sigma_ts**2 / alpha_ts / sigma_t * eps_t
             sigma_Q = sigma_ts * sigma_s / sigma_t
-            noise = torch.randn(X_t.shape)
+            noise = torch.randn(X_t.shape, device=self.device)
             X_s = mu_Q + sigma_Q * noise
             X_t = X_s
 
