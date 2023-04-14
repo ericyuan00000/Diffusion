@@ -45,7 +45,7 @@ class Trainer():
                 loss.backward()
                 self.optimizer.step()
                 train_loss += loss*train_dataloader.batch_size/len(train_dataloader)
-            train_losses.append(train_loss)
+            train_losses.append(train_loss.detach())
             
             self.model.eval()
             val_loss = 0
@@ -63,7 +63,7 @@ class Trainer():
                 pred_epsilon = self.model.forward(batch_X, batch_H, batch_K)
                 loss = self.loss_func(pred_epsilon, batch_epsilon)
                 val_loss += loss*val_dataloader.batch_size/len(val_dataloader)
-            val_losses.append(val_loss)
+            val_losses.append(val_loss.detach())
 
             print(f'Train loss: {train_loss:.3f} - Val loss: {val_loss:.3f}')
 
