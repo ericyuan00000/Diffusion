@@ -13,7 +13,7 @@ class Trainer():
                  noise_schedule=lambda t: (1 - 2e-5) * (1 - t**2) + 1e-5,
                  lr=1.0e-3,
                  epoch=1000):
-        self.model = model
+        self.model = model.to(device)
         self.device = device
         self.optimizer = Adam(model.parameters(), lr=lr)
         self.epoch = epoch
