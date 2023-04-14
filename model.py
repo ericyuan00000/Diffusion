@@ -52,12 +52,10 @@ class Diffusion(nn.Module):
         return H, K
     
     
-    def forward(self, X, H, K):
+    def forward(self, X, H, E, K):
         n_batch = H.shape[0]
         n_atom = H.shape[1]
         n_feat = H.shape[2]
-        
-        E = torch.zeros((n_batch, n_atom, n_atom, 2*n_feat+2), device=self.device)    # edge features, (n_batch, n_atom, n_atom, 2*n_feat+2)
         
         for l in range(self.n_layer):
             E[:, :, :, 0:n_feat] = H[:, :, None, :].tile(1, 1, n_atom, 1)

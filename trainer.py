@@ -32,6 +32,7 @@ class Trainer():
                 batch_X = batch_data['X'].to(self.device)
                 batch_Z = batch_data['Z'].to(self.device)
                 batch_H, batch_K = self.model.encode(batch_Z)
+                batch_E = torch.zeros((batch_X.shape[0], batch_X.shape[1], batch_X.shape[1], 2*batch_H.shape[2]+2), device=self.device)
                 
                 batch_t = torch.rand(1, device=self.device).tile(batch_X.shape[0], batch_X.shape[1], 1)
                 batch_alpha = self.noise_schedule(batch_t)  # alpha(t), weight of data
@@ -39,7 +40,7 @@ class Trainer():
                 batch_epsilon = torch.randn(batch_X.shape, device=self.device)  # noise
                 batch_X = batch_alpha * batch_X + batch_sigma * batch_epsilon
                 
-                pred_epsilon = self.model.forward(batch_X, batch_H, batch_K)
+                pred_epsilon = self.model.forward(batch_X, batch_H, batch_E, batch_K)
                 loss = self.loss_func(pred_epsilon, batch_epsilon)
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -53,6 +54,7 @@ class Trainer():
                 batch_X = batch_data['X']
                 batch_Z = batch_data['Z']
                 batch_H, batch_K = self.model.encode(batch_Z)
+                batch_E = torch.zeros((batch_X.shape[0], batch_X.shape[1], batch_X.shape[1], 2*batch_H.shape[2]+2), device=self.device)
 
                 batch_t = torch.rand(1, device=self.device).tile(batch_X.shape[0], batch_X.shape[1], 1)
                 batch_alpha = self.noise_schedule(batch_t)  # alpha(t), weight of data
@@ -60,7 +62,7 @@ class Trainer():
                 batch_epsilon = torch.randn(batch_X.shape, device=self.device)  # noise
                 batch_X = batch_alpha * batch_X + batch_sigma * batch_epsilon
 
-                pred_epsilon = self.model.forward(batch_X, batch_H, batch_K)
+                pred_epsilon = self.model.forward(batch_X, batch_H, batch_E, batch_K)
                 loss = self.loss_func(pred_epsilon, batch_epsilon)
                 val_loss.append(loss.detach())
             val_losses.append(np.mean(val_loss))
