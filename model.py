@@ -65,6 +65,8 @@ class Diffusion(nn.Module):
             if l==0:
                 E[:, :, :, [-1]] = D.norm(dim=3, keepdim=True)**2
 
+            print(E.device)
+            print(E.clone().device)
             MH = self.layers[l]['feat_message'](E.clone())    # feature messages, (n_batch, n_atom, n_atom, n_feat)
             WH = self.layers[l]['feat_weight'](MH) * K[:, :, :, None]    # message weights, (n_batch, n_atom, n_atom, 1)
             H = self.layers[l]['feat_update'](torch.cat([H, (MH*WH).sum(dim=2)], dim=2)) + H    # features, (n_batch, n_atom, n_feat)
