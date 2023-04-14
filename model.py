@@ -50,7 +50,7 @@ class Diffusion(nn.Module):
         return H, K
     
     
-    def forward(self, X, H, E, K):
+    def forward(self, X, H, K):
         n_batch = H.shape[0]
         n_atom = H.shape[1]
         n_feat = H.shape[2]
