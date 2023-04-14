@@ -20,7 +20,7 @@ val_dataset = CustomDataset(X, Z)
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=100, shuffle=True, drop_last=True)
 
 trainer = Trainer(model, lr=1.0e-3, epoch=100)
-res = trainer.train(train_dataloader, val_dataloader, verbose=False)
+res = trainer.train(train_dataloader, val_dataloader)
 
 sampler = Sampler(model)
 sampler.sample(n_step=10000)
