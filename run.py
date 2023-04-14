@@ -12,7 +12,6 @@ for i in range(1000):
 Z = np.ones((1000, 2, 1))
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(device)
 model = Diffusion()
 
 train_dataset = CustomDataset(X, Z)
