@@ -4,14 +4,16 @@ import torch
 class Sampler():
     def __init__(self, 
                  model, 
+                 device,
                  noise_schedule=lambda t: (1 - 2e-5) * (1 - t**2) + 1e-5):
         self.model = model
+        self.device = device
         self.noise_schedule = noise_schedule
 
     
     def sample(self, n_sample=100, n_step=10000):
-        X_t = torch.randn(n_sample, 2, 3)
-        Z = torch.zeros((n_sample, 2, 2))
+        X_t = torch.randn(n_sample, 2, 3).to(self.device)
+        Z = torch.zeros((n_sample, 2, 2)).to(self.device)
         Z[:, :, 1] = 1
         H, K = self.model.encode(Z)
         for step in range(n_step):

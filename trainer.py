@@ -33,10 +33,10 @@ class Trainer():
                 batch_Z = batch_data['Z'].to(self.device)
                 batch_H, batch_K = self.model.encode(batch_Z)
                 
-                batch_t = torch.rand(1).tile(batch_X.shape[0], batch_X.shape[1], 1)
+                batch_t = torch.rand(1, device=self.device).tile(batch_X.shape[0], batch_X.shape[1], 1)
                 batch_alpha = self.noise_schedule(batch_t)  # alpha(t), weight of data
                 batch_sigma = torch.sqrt(1 - batch_alpha**2)  # sigma(t), weight of noise
-                batch_epsilon = torch.randn(batch_X.shape)  # noise
+                batch_epsilon = torch.randn(batch_X.shape, device=self.device)  # noise
                 batch_X = batch_alpha * batch_X + batch_sigma * batch_epsilon
                 
                 pred_epsilon = self.model.forward(batch_X, batch_H, batch_K)
@@ -54,10 +54,10 @@ class Trainer():
                 batch_Z = batch_data['Z']
                 batch_H, batch_K = self.model.encode(batch_Z)
 
-                batch_t = torch.rand(1).tile(batch_X.shape[0], batch_X.shape[1], 1)
+                batch_t = torch.rand(1, device=self.device).tile(batch_X.shape[0], batch_X.shape[1], 1)
                 batch_alpha = self.noise_schedule(batch_t)  # alpha(t), weight of data
                 batch_sigma = torch.sqrt(1 - batch_alpha**2)  # sigma(t), weight of noise
-                batch_epsilon = torch.randn(batch_X.shape)  # noise
+                batch_epsilon = torch.randn(batch_X.shape, device=self.device)  # noise
                 batch_X = batch_alpha * batch_X + batch_sigma * batch_epsilon
 
                 pred_epsilon = self.model.forward(batch_X, batch_H, batch_K)
@@ -68,14 +68,7 @@ class Trainer():
             print(f'Train loss: {np.mean(train_loss):.3f} - Val loss: {np.mean(val_loss):.3f}')
 
         return {'train_losses': train_losses, 'val_losses': val_losses}
-    
-        
-    def evaluate(self, eval_dataloader):
-        eval_loss = []
-        
 
-            
-        return eval_loss
     
 
 def plot(res):
