@@ -56,9 +56,12 @@ class Diffusion(nn.Module):
         n_batch = H.shape[0]
         n_atom = H.shape[1]
         n_feat = H.shape[2]
-        print(self.layers)
+
+        for name, parameter in self.named_parameters():
+            print(name)
+            print(parameter.device)
         
-        for layer in self.layers:
+        for l, layer in enumerate(self.layers):
             E[:, :, :, 0:n_feat] = H[:, :, None, :].tile(1, 1, n_atom, 1)
             E[:, :, :, n_feat:2*n_feat] = H[:, None, :, :].tile(1, n_atom, 1, 1)
             D = X[:, :, None, :].tile(1, 1, n_atom, 1) - X[:, None, :, :].tile(1, n_atom, 1, 1)    # distance matrices, (n_batch, n_atom, n_atom, 3)
@@ -66,8 +69,6 @@ class Diffusion(nn.Module):
             if l==0:
                 E[:, :, :, [-1]] = D.norm(dim=3, keepdim=True)**2
 
-            print(E.device)
-            print(E.clone().device)
             MH = layer['feat_message'](E.clone())    # feature messages, (n_batch, n_atom, n_atom, n_feat)
             WH = layer['feat_weight'](MH) * K[:, :, :, None]    # message weights, (n_batch, n_atom, n_atom, 1)
             H = layer['feat_update'](torch.cat([H, (MH*WH).sum(dim=2)], dim=2)) + H    # features, (n_batch, n_atom, n_feat)
