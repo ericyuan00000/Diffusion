@@ -71,7 +71,5 @@ class Diffusion(nn.Module):
             D = D/(D.norm(dim=3, keepdim=True)+1)
             WX = self.layers[l]['coord_weight'](E.clone()) * K[:, :, :, None]    # message weights, (n_batch, n_atom, n_atom, 1)
             X = (D * WX).sum(dim=2) + X    # coordinates, (n_batch, n_atom, 3)
-        del E
-        torch.cuda.empty_cache()
 
-        return X
+        return torch.cat([X, H], dim=2)
