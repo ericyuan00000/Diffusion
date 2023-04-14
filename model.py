@@ -2,15 +2,13 @@ import torch
 from torch import nn
 
 class Diffusion(nn.Module):
-    def __init__(self, device, n_layer=9, n_feat=32, n_atomtype=2):
+    def __init__(self, n_layer=9, n_feat=32, n_atomtype=2):
         super(Diffusion, self).__init__()
-        self.device = device
         self.n_layer = n_layer
         self.n_feat = n_feat
         self.n_atomtype = n_atomtype
         self.embed = nn.Linear(self.n_atomtype, self.n_feat)
         self.layers = nn.ModuleList([self.egnn() for l in range(n_layer)])
-        self.to(self.device)
         
         
     def egnn(self):
@@ -46,7 +44,7 @@ class Diffusion(nn.Module):
         n_atom = Z.shape[1]
         
         H = self.embed(Z.float())   # atomic features, (n_batch, n_atom, n_feat)
-        K = torch.ones(n_batch, n_atom, n_atom)    # masks, (n_batch, n_atom, n_atom)
+        K = torch.ones((n_batch, n_atom, n_atom), device=H.device)    # masks, (n_batch, n_atom, n_atom)
         for n_atom_ in range(n_atom):
             K[:, n_atom_, n_atom_] = 0
         return H, K
@@ -56,11 +54,8 @@ class Diffusion(nn.Module):
         n_batch = H.shape[0]
         n_atom = H.shape[1]
         n_feat = H.shape[2]
-
-        for name, parameter in self.named_parameters():
-            print(name)
-            print(parameter.device)
         
+        E = torch.zeros((n_batch, n_atom, n_atom, 2*n_feat+2), device=H.device)    # edge featrues, (n_batch, n_atom, n_atom, 2*n_feat+2)
         for l, layer in enumerate(self.layers):
             E[:, :, :, 0:n_feat] = H[:, :, None, :].tile(1, 1, n_atom, 1)
             E[:, :, :, n_feat:2*n_feat] = H[:, None, :, :].tile(1, n_atom, 1, 1)

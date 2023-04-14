@@ -13,7 +13,7 @@ Z = np.ones((1000, 2, 1))
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
-model = Diffusion(device=device)
+model = Diffusion()
 
 train_dataset = CustomDataset(X, Z)
 train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=100, shuffle=True, drop_last=True)
