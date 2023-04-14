@@ -9,12 +9,12 @@ class Diffusion(nn.Module):
         self.n_feat = n_feat
         self.n_atomtype = n_atomtype
         self.embed = nn.Linear(self.n_atomtype, self.n_feat)
-        self.layers = [self.egnn() for l in range(self.n_layer)]
+        self.layers = nn.ModuleList([self.egnn() for l in range(n_layer)])
         self.to(self.device)
         
         
     def egnn(self):
-        layer = {
+        layer = nn.ModuleDict({
             'feat_message': nn.Sequential(
                 nn.Linear(2*self.n_feat+2, self.n_feat),
                 nn.SiLU(),
@@ -37,7 +37,7 @@ class Diffusion(nn.Module):
                 nn.SiLU(),
                 nn.Linear(self.n_feat, 1)
             )
-        }
+        })
         return layer
         
 
