@@ -3,7 +3,7 @@ from torch import nn
 from torch.optim import Adam
 import random
 from tqdm import tqdm
-import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 class Trainer():
@@ -14,7 +14,7 @@ class Trainer():
                  lr=1.0e-3,
                  n_epoch=1000,
                  save_model=20,
-                 save_path='model.pt'):
+                 save_path='output'):
         self.model = model.to(device)
         self.device = device
         self.optimizer = Adam(model.parameters(), lr=lr)
@@ -23,22 +23,21 @@ class Trainer():
         self.noise_schedule = noise_schedule    # alpha(t)
         self.save_model = save_model
         self.save_path = save_path
+        self.loss_log = {'epoch':[], 'train': [], 'val':[]}
 
         
     def train(self, train_dataloader, val_dataloader):
-        train_losses = []
-        val_losses = []
-        
         for epoch in tqdm(range(self.n_epoch)):
             self.model.train()
             train_loss = 0
             for batch_data in iter(train_dataloader):
                 batch_X = batch_data['X'].to(self.device)
                 batch_Z = batch_data['Z'].to(self.device)
-                batch_H, batch_K = self.model.encode(batch_Z)
+                batch_K = batch_data['K'].to(self.device)
+                batch_H = self.model.embed(batch_Z)
 
-                n_batch = batch_H.shape[0]
-                n_atom = batch_H.shape[1]
+                n_batch = batch_X.shape[0]
+                n_atom = batch_X.shape[1]
                 n_feat = batch_H.shape[2]
                 
                 batch_t = torch.rand(1, device=self.device).tile(n_batch, n_atom, 1)
@@ -54,18 +53,18 @@ class Trainer():
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-                train_loss += loss.detach()/len(train_dataloader)
-            train_losses.append(train_loss)
+                train_loss += loss.detach().item()/len(train_dataloader)
             
             self.model.eval()
             val_loss = 0
             for batch_data in iter(val_dataloader):
                 batch_X = batch_data['X'].to(self.device)
                 batch_Z = batch_data['Z'].to(self.device)
-                batch_H, batch_K = self.model.encode(batch_Z)
+                batch_K = batch_data['K'].to(self.device)
+                batch_H = self.model.embed(batch_Z)
 
-                n_batch = batch_H.shape[0]
-                n_atom = batch_H.shape[1]
+                n_batch = batch_X.shape[0]
+                n_atom = batch_X.shape[1]
                 n_feat = batch_H.shape[2]
 
                 batch_t = torch.rand(1, device=self.device).tile(batch_X.shape[0], batch_X.shape[1], 1)
@@ -78,28 +77,27 @@ class Trainer():
 
                 pred_epsilon = self.model.forward(batch_X, batch_H, batch_K)
                 loss = self.loss_func(pred_epsilon, batch_epsilon)
-                val_loss += loss.detach()/len(val_dataloader)
-            val_losses.append(val_loss)
+                val_loss += loss.detach().item()/len(val_dataloader)
 
             print(f'Train loss: {train_loss:.3f} - Val loss: {val_loss:.3f}')
+            self.loss_log['epoch'].append(epoch+1)
+            self.loss_log['train'].append(train_loss)
+            self.loss_log['val'].append(val_loss)
 
-            if epoch%self.save_model==0:
-                torch.save(self.model.state_dict(), self.save_path)
+            if (epoch+1)%self.save_model==0:
+                torch.save(self.model.state_dict(), self.save_path+'/model.pt')
+            self.record_loss()
 
-        torch.save(self.model.state_dict(), self.save_path)
 
-        return {'train_losses': train_losses, 'val_losses': val_losses}
+    def record_loss(self):
+        df = pd.DataFrame(self.loss_log)
+        df.to_csv(self.save_path+'/log.csv', index=False)
 
-    
-
-def plot(res):
-    plt.figure()
-    plt.plot(np.mean([res[i]['train_losses'] for i in range(len(res))], axis=0), zorder=12)
-    plt.plot(np.mean([res[i]['val_losses'] for i in range(len(res))], axis=0), zorder=11)
-    for i in range(len(res)):
-        plt.plot(res[i]['train_losses'], color='tab:blue', alpha=0.3)
-        plt.plot(res[i]['val_losses'], color='tab:orange', alpha=0.3)
-    plt.legend(['Training', 'Validation'])
-    plt.xlabel('Epoch')
-    plt.ylabel('MSE')
-    
+        plt.figure()
+        plt.plot(self.loss_log['epoch'], self.loss_log['train'])
+        plt.plot(self.loss_log['epoch'], self.loss_log['val'])
+        plt.legend(['Training', 'Validation'])
+        plt.xlabel('Epoch')
+        plt.ylabel('MSE loss')
+        plt.savefig(self.save_path+'/log.svg')
+        plt.close()
