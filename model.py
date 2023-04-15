@@ -14,26 +14,26 @@ class Diffusion(nn.Module):
     def egnn_layer(self):
         layer = nn.ModuleDict({
             'feat_message': nn.Sequential(
-                nn.Linear(2*self.n_feat+2, self.n_feat),
+                nn.Linear(2*(self.n_feat+1)+2, self.n_feat+1),
                 nn.SiLU(),
-                nn.Linear(self.n_feat, self.n_feat),
+                nn.Linear(self.n_feat+1, self.n_feat+1),
                 nn.SiLU()
             ),
             'feat_weight': nn.Sequential(
-                nn.Linear(self.n_feat, 1),
+                nn.Linear(self.n_feat+1, 1),
                 nn.Sigmoid()
             ),
             'feat_update': nn.Sequential(
-                nn.Linear(2*self.n_feat, self.n_feat),
+                nn.Linear(2*(self.n_feat+1), self.n_feat+1),
                 nn.SiLU(),
-                nn.Linear(self.n_feat, self.n_feat)
+                nn.Linear(self.n_feat+1, self.n_feat+1)
             ),
             'coord_weight': nn.Sequential(
-                nn.Linear(2*self.n_feat+2, self.n_feat),
+                nn.Linear(2*(self.n_feat+1)+2, self.n_feat+1),
                 nn.SiLU(),
-                nn.Linear(self.n_feat, self.n_feat),
+                nn.Linear(self.n_feat+1, self.n_feat+1),
                 nn.SiLU(),
-                nn.Linear(self.n_feat, 1)
+                nn.Linear(self.n_feat+1, 1)
             )
         })
         return layer
@@ -44,15 +44,16 @@ class Diffusion(nn.Module):
         return H
     
     
-    def forward(self, X, H, K):
+    def forward(self, X, H, K, T):
         n_batch = X.shape[0]
         n_atom = X.shape[1]
         n_feat = H.shape[2]
         
-        E = torch.zeros((n_batch, n_atom, n_atom, 2*n_feat+2), device=H.device)    # edge featrues, (n_batch, n_atom, n_atom, 2*n_feat+2)
+        H = torch.cat([H, T], dim=2)   # atomic features, (n_batch, n_atom, n_feat+1)
+        E = torch.zeros((n_batch, n_atom, n_atom, 2*(n_feat+1)+2), device=H.device)    # edge featrues, (n_batch, n_atom, n_atom, 2*(n_feat+1)+2)
         for _layer, layer in enumerate(self.egnn_layers):
-            E[:, :, :, 0:n_feat] = H[:, :, None, :].tile(1, 1, n_atom, 1)
-            E[:, :, :, n_feat:2*n_feat] = H[:, None, :, :].tile(1, n_atom, 1, 1)
+            E[:, :, :, 0:(n_feat+1)] = H[:, :, None, :].tile(1, 1, n_atom, 1)
+            E[:, :, :, (n_feat+1):2*(n_feat+1)] = H[:, None, :, :].tile(1, n_atom, 1, 1)
             D = X[:, :, None, :].tile(1, 1, n_atom, 1) - X[:, None, :, :].tile(1, n_atom, 1, 1)    # distance matrices, (n_batch, n_atom, n_atom, 3)
             E[:, :, :, [-2]] = D.norm(dim=3, keepdim=True)**2
             if _layer==0:
@@ -66,4 +67,4 @@ class Diffusion(nn.Module):
             WX = layer['coord_weight'](E.clone()) * K[:, :, :, None]    # message weights, (n_batch, n_atom, n_atom, 1)
             X = (D * WX).sum(dim=2) + X    # coordinates, (n_batch, n_atom, 3)
 
-        return torch.cat([X, H], dim=2)
+        return torch.cat([X, H[:, :, 0:n_feat]], dim=2)
