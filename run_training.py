@@ -7,10 +7,10 @@ from sampler import *
 
 # train_data = np.load('/global/scratch/users/ericyuan/QM9/QM9_train.npz')
 # val_data = np.load('/global/scratch/users/ericyuan/QM9/QM9_val.npz')
-train_data = {'X': np.tile(np.array([[0,0,0],[0,0,1]]), [1000, 1, 1]),
-              'R': np.tile(np.array([[1],[1]]), [1000, 1, 1])}
-val_data = {'X': np.tile(np.array([[0,0,0],[0,0,1]]), [1000, 1, 1]),
-            'R': np.tile(np.array([[1],[1]]), [1000, 1, 1])}
+train_data = {'R': np.tile(np.array([[0,0,0],[0,0,1]]), [1000, 1, 1]),
+              'Z': np.tile(np.array([[1],[1]]), [1000, 1, 1])}
+val_data = {'R': np.tile(np.array([[0,0,0],[0,0,1]]), [100, 1, 1]),
+            'Z': np.tile(np.array([[1],[1]]), [100, 1, 1])}
 
 model = Diffusion(n_layer=9, n_feat=256, n_atomtype=10)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
