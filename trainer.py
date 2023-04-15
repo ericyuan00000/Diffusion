@@ -74,8 +74,8 @@ class Trainer():
                 batch_X = batch_alpha * batch_X + batch_sigma * batch_epsilon[:, :, 0:3]
                 batch_H = batch_alpha * batch_H + batch_sigma * batch_epsilon[:, :, 3:3+n_feat]
                 # batch_H = torch.cat([batch_H, batch_t], dim=2)
-
-                pred_epsilon = self.model.forward(batch_X, batch_H, batch_K, batch_t)
+                with torch.no_grad():
+                    pred_epsilon = self.model.forward(batch_X, batch_H, batch_K, batch_t)
                 loss = self.loss_func(pred_epsilon, batch_epsilon)
                 val_loss += loss.detach().cpu().item()/len(val_dataloader)
 
