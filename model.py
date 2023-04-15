@@ -52,8 +52,6 @@ class Diffusion(nn.Module):
         H = torch.cat([H, T], dim=2)   # atomic features, (n_batch, n_atom, n_feat+1)
         E = torch.zeros((n_batch, n_atom, n_atom, 2*(n_feat+1)+2), device=H.device)    # edge featrues, (n_batch, n_atom, n_atom, 2*(n_feat+1)+2)
         for _layer, layer in enumerate(self.egnn_layers):
-            print(_layer)
-
             E[:, :, :, 0:(n_feat+1)] = H[:, :, None, :].tile(1, 1, n_atom, 1)
             E[:, :, :, (n_feat+1):2*(n_feat+1)] = H[:, None, :, :].tile(1, n_atom, 1, 1)
             D = X[:, :, None, :].tile(1, 1, n_atom, 1) - X[:, None, :, :].tile(1, n_atom, 1, 1)    # distance matrices, (n_batch, n_atom, n_atom, 3)

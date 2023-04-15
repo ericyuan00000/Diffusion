@@ -53,7 +53,7 @@ class Trainer():
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-                train_loss += loss.detach().item()/len(train_dataloader)
+                train_loss += loss.detach().cpu().item()/len(train_dataloader)
             
             self.model.eval()
             val_loss = 0
@@ -77,7 +77,7 @@ class Trainer():
 
                 pred_epsilon = self.model.forward(batch_X, batch_H, batch_K, batch_t)
                 loss = self.loss_func(pred_epsilon, batch_epsilon)
-                val_loss += loss.detach().item()/len(val_dataloader)
+                val_loss += loss.detach().cpu().item()/len(val_dataloader)
 
             print(f'Train loss: {train_loss:.3f} - Val loss: {val_loss:.3f}')
             self.loss_log['epoch'].append(epoch+1)
