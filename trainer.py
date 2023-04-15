@@ -76,7 +76,7 @@ class Trainer():
                 # batch_H = torch.cat([batch_H, batch_t], dim=2)
                 with torch.no_grad():
                     pred_epsilon = self.model.forward(batch_X, batch_H, batch_K, batch_t)
-                loss = self.loss_func(pred_epsilon, batch_epsilon)
+                    loss = self.loss_func(pred_epsilon, batch_epsilon)
                 val_loss += loss.detach().cpu().item()/len(val_dataloader)
 
             print(f'Train loss: {train_loss:.3f} - Val loss: {val_loss:.3f}')
