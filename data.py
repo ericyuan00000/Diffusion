@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset
 
 class CustomDataset(Dataset):
-    def __init__(self, data, n_atomtype=2):
+    def __init__(self, data, n_atomtype=10):
         self.X = torch.tensor(data['R'], dtype=torch.float)
         self.Z = torch.nn.functional.one_hot(torch.tensor(data['Z'].squeeze(), dtype=torch.long), num_classes=n_atomtype)
         

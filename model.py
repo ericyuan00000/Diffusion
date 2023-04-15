@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 class Diffusion(nn.Module):
-    def __init__(self, n_layer=9, n_feat=32, n_atomtype=2):
+    def __init__(self, n_layer=9, n_feat=256, n_atomtype=10):
         super(Diffusion, self).__init__()
         self.n_layer = n_layer
         self.n_feat = n_feat
