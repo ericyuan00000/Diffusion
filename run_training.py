@@ -5,17 +5,19 @@ from data import *
 from trainer import *
 from sampler import *
 
-X = np.zeros((10000, 2, 3))
-X[:, 0, 2] = -0.5
-X[:, 1, 2] = 0.5
-Z = np.ones((10000, 2, 1))
+# train_data = np.load('/global/scratch/users/ericyuan/QM9/QM9_train.npz')
+# val_data = np.load('/global/scratch/users/ericyuan/QM9/QM9_val.npz')
+train_data = {'X': np.tile(np.array([[0,0,0],[0,0,1]]), [1000, 1, 1]),
+              'R': np.tile(np.array([[1],[1]]), [1000, 1, 1])}
+val_data = {'X': np.tile(np.array([[0,0,0],[0,0,1]]), [1000, 1, 1]),
+            'R': np.tile(np.array([[1],[1]]), [1000, 1, 1])}
 
 model = Diffusion(n_layer=9, n_feat=256, n_atomtype=10)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-train_dataset = CustomDataset(X, Z)
+train_dataset = CustomDataset(train_data)
 train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True, drop_last=True)
-val_dataset = CustomDataset(X, Z)
+val_dataset = CustomDataset(val_data)
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=64, shuffle=True, drop_last=True)
 
 trainer = Trainer(model, lr=1.0e-4, n_epoch=1000, save_model=20, save_path='output', device=device)
