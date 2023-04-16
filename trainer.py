@@ -39,7 +39,7 @@ class Trainer():
                 n_atom = batch_X.shape[1]
                 n_atomtype = batch_Z.shape[2]
 
-                batch_t = torch.rand((batch_X.shape[0], batch_X.shape[1], 1), device=self.device)
+                batch_t = torch.rand(1, device=self.device).tile((n_batch, n_atom, 1))
                 batch_alpha = self.noise_schedule(batch_t)  # alpha(t), weight of data
                 batch_sigma = torch.sqrt(1 - batch_alpha**2)  # sigma(t), weight of noise
                 batch_epsilon = torch.randn((n_batch, n_atom, 3+n_atomtype), device=self.device)  # noise
@@ -52,7 +52,7 @@ class Trainer():
                 loss.backward()
                 self.optimizer.step()
                 if verbose:
-                    print(f'(training loss: {loss})')
+                    print(f'(training loss: {loss}, t: {batch_t[0, 0, 0]})')
                 train_loss += loss.detach().cpu().item()/len(train_dataloader)
             
             self.model.eval()
@@ -66,7 +66,7 @@ class Trainer():
                 n_atom = batch_X.shape[1]
                 n_atomtype = batch_Z.shape[2]
 
-                batch_t = torch.rand((batch_X.shape[0], batch_X.shape[1], 1), device=self.device)
+                batch_t = torch.rand(1, device=self.device).tile((n_batch, n_atom, 1))
                 batch_alpha = self.noise_schedule(batch_t)  # alpha(t), weight of data
                 batch_sigma = torch.sqrt(1 - batch_alpha**2)  # sigma(t), weight of noise
                 batch_epsilon = torch.randn((n_batch, n_atom, 3+n_atomtype), device=self.device)  # noise
@@ -76,7 +76,7 @@ class Trainer():
                     pred_epsilon = self.model.forward(batch_X, batch_Z, batch_K, batch_t)
                     loss = self.loss_func(pred_epsilon, batch_epsilon)
                 if verbose:
-                    print(f'(validation loss: {loss})')
+                    print(f'(validation loss: {loss}, t: {batch_t[0, 0, 0]})')
                 val_loss += loss.detach().cpu().item()/len(val_dataloader)
 
             print(f'Train loss: {train_loss:.3f} - Val loss: {val_loss:.3f}')
