@@ -34,21 +34,19 @@ class Trainer():
                 batch_X = batch_data['X'].to(self.device)
                 batch_Z = batch_data['Z'].to(self.device)
                 batch_K = batch_data['K'].to(self.device)
-                batch_H = self.model.embed(batch_Z)
 
                 n_batch = batch_X.shape[0]
                 n_atom = batch_X.shape[1]
-                n_feat = batch_H.shape[2]
-                
-                batch_t = torch.rand(1, device=self.device).tile(n_batch, n_atom, 1)
+                n_atomtype = batch_Z.shape[2]
+
+                batch_t = torch.rand((batch_X.shape[0], batch_X.shape[1], 1), device=self.device)
                 batch_alpha = self.noise_schedule(batch_t)  # alpha(t), weight of data
                 batch_sigma = torch.sqrt(1 - batch_alpha**2)  # sigma(t), weight of noise
-                batch_epsilon = torch.randn((n_batch, n_atom, 3+n_feat), device=self.device)  # noise
+                batch_epsilon = torch.randn((n_batch, n_atom, 3+n_atomtype), device=self.device)  # noise
                 batch_X = batch_alpha * batch_X + batch_sigma * batch_epsilon[:, :, 0:3]
-                batch_H = batch_alpha * batch_H + batch_sigma * batch_epsilon[:, :, 3:3+n_feat]
-                # batch_H = torch.cat([batch_H, batch_t], dim=2)
+                batch_Z = batch_alpha * batch_Z + batch_sigma * batch_epsilon[:, :, 3:3+n_atomtype]
                 
-                pred_epsilon = self.model.forward(batch_X, batch_H, batch_K, batch_t)
+                pred_epsilon = self.model.forward(batch_X, batch_Z, batch_K, batch_t)
                 loss = self.loss_func(pred_epsilon, batch_epsilon)
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -61,21 +59,19 @@ class Trainer():
                 batch_X = batch_data['X'].to(self.device)
                 batch_Z = batch_data['Z'].to(self.device)
                 batch_K = batch_data['K'].to(self.device)
-                batch_H = self.model.embed(batch_Z)
 
                 n_batch = batch_X.shape[0]
                 n_atom = batch_X.shape[1]
-                n_feat = batch_H.shape[2]
+                n_atomtype = batch_Z.shape[2]
 
-                batch_t = torch.rand(1, device=self.device).tile(batch_X.shape[0], batch_X.shape[1], 1)
+                batch_t = torch.rand((batch_X.shape[0], batch_X.shape[1], 1), device=self.device)
                 batch_alpha = self.noise_schedule(batch_t)  # alpha(t), weight of data
                 batch_sigma = torch.sqrt(1 - batch_alpha**2)  # sigma(t), weight of noise
-                batch_epsilon = torch.randn((n_batch, n_atom, 3+n_feat), device=self.device)  # noise
+                batch_epsilon = torch.randn((n_batch, n_atom, 3+n_atomtype), device=self.device)  # noise
                 batch_X = batch_alpha * batch_X + batch_sigma * batch_epsilon[:, :, 0:3]
-                batch_H = batch_alpha * batch_H + batch_sigma * batch_epsilon[:, :, 3:3+n_feat]
-                # batch_H = torch.cat([batch_H, batch_t], dim=2)
+                batch_Z = batch_alpha * batch_Z + batch_sigma * batch_epsilon[:, :, 3:3+n_atomtype]
                 with torch.no_grad():
-                    pred_epsilon = self.model.forward(batch_X, batch_H, batch_K, batch_t)
+                    pred_epsilon = self.model.forward(batch_X, batch_Z, batch_K, batch_t)
                     loss = self.loss_func(pred_epsilon, batch_epsilon)
                 val_loss += loss.detach().cpu().item()/len(val_dataloader)
 

@@ -5,6 +5,8 @@ from data import *
 from trainer import *
 from sampler import *
 
+torch.autograd.detect_anomaly()
+
 train_data = np.load('/global/scratch/users/ericyuan/QM9/QM9_train.npz')
 val_data = np.load('/global/scratch/users/ericyuan/QM9/QM9_val.npz')
 
