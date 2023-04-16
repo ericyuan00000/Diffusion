@@ -26,7 +26,7 @@ class Trainer():
         self.loss_log = {'epoch':[], 'train': [], 'val':[]}
 
         
-    def train(self, train_dataloader, val_dataloader):
+    def train(self, train_dataloader, val_dataloader, verbose=False):
         for epoch in tqdm(range(self.n_epoch)):
             self.model.train()
             train_loss = 0
@@ -51,6 +51,8 @@ class Trainer():
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
+                if verbose:
+                    print(f'(training loss: {loss})')
                 train_loss += loss.detach().cpu().item()/len(train_dataloader)
             
             self.model.eval()
@@ -73,6 +75,8 @@ class Trainer():
                 with torch.no_grad():
                     pred_epsilon = self.model.forward(batch_X, batch_Z, batch_K, batch_t)
                     loss = self.loss_func(pred_epsilon, batch_epsilon)
+                if verbose:
+                    print(f'(validation loss: {loss})')
                 val_loss += loss.detach().cpu().item()/len(val_dataloader)
 
             print(f'Train loss: {train_loss:.3f} - Val loss: {val_loss:.3f}')
