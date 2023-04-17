@@ -34,7 +34,7 @@ trainer.train(train_dataloader, val_dataloader, verbose=True)
 
 # trainer = Trainer(model, lr=1.0e-4, n_epoch=100, save_model=20, save_path='Chem C242/Diffusion/output_h2', device=device)
 # # trainer = Trainer(model, lr=1.0e-4, n_epoch=100, save_model=20, save_path='output_h2', device=device)
-# trainer.train(train_dataloader, val_dataloader)
+# trainer.train(train_dataloader, val_dataloader, verbose=True)
 
 
 print('done!')

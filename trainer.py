@@ -53,6 +53,16 @@ class Trainer():
                 self.optimizer.step()
                 if verbose:
                     print(f'(training loss: {loss}, max epsilon: {batch_epsilon.max()}, max prediction: {pred_epsilon.max()})')
+                maxgrad, maxparam, maxname = 0, None, None
+                for name, param in self.model.named_parameters():
+                    if param.grad.abs().max() > maxgrad:
+                        maxgrad = param.grad.abs().max()
+                        maxparam = param
+                        maxname = name
+                print(maxname)
+                print(maxgrad)
+                print(maxparam.data)
+                print(maxparam.grad)
                 train_loss += loss.detach().cpu().item()/len(train_dataloader)
             
             self.model.eval()
@@ -75,8 +85,6 @@ class Trainer():
                 with torch.no_grad():
                     pred_epsilon = self.model.forward(batch_X, batch_Z, batch_K, batch_t)
                     loss = self.loss_func(pred_epsilon, batch_epsilon)
-                if verbose:
-                    print(f'(validation loss: {loss}, max epsilon: {batch_epsilon.max()}, max prediction: {pred_epsilon.max()})')
                 val_loss += loss.detach().cpu().item()/len(val_dataloader)
 
             print(f'Train loss: {train_loss:.3f} - Val loss: {val_loss:.3f}')
