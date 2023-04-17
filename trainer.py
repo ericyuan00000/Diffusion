@@ -26,7 +26,7 @@ class Trainer():
         self.loss_log = {'epoch':[], 'train': [], 'val':[]}
 
         
-    def train(self, train_dataloader, val_dataloader, verbose=False):
+    def train(self, train_dataloader, val_dataloader):
         for epoch in tqdm(range(self.n_epoch)):
             self.model.train()
             train_loss = 0
@@ -50,16 +50,7 @@ class Trainer():
                 loss = self.loss_func(pred_epsilon, batch_epsilon)
                 self.optimizer.zero_grad()
                 loss.backward()
-                if verbose:
-                    print(f'(training loss: {loss:.3f}, max epsilon: {batch_epsilon.max():.3f}, max prediction: {pred_epsilon.max():.3f})')
-                    maxgrad, maxparam, maxname = 0, None, None
-                    for name, param in self.model.named_parameters():
-                        if param.grad.abs().max() > maxgrad:
-                            maxgrad = param.grad.abs().max()
-                            maxparam = param
-                            maxname = name
-                    print(f'{maxname}, {maxgrad.item():.3f}')
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+                print(torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0))
                 self.optimizer.step()
                 train_loss += loss.detach().cpu().item()/len(train_dataloader)
             
