@@ -50,19 +50,19 @@ class Trainer():
                 loss = self.loss_func(pred_epsilon, batch_epsilon)
                 self.optimizer.zero_grad()
                 loss.backward()
-                self.optimizer.step()
                 if verbose:
                     print(f'(training loss: {loss}, max epsilon: {batch_epsilon.max()}, max prediction: {pred_epsilon.max()})')
-                maxgrad, maxparam, maxname = 0, None, None
-                for name, param in self.model.named_parameters():
-                    if param.grad.abs().max() > maxgrad:
-                        maxgrad = param.grad.abs().max()
-                        maxparam = param
-                        maxname = name
-                print(maxname)
-                print(maxgrad)
-                print(maxparam.data)
-                print(maxparam.grad)
+                    maxgrad, maxparam, maxname = 0, None, None
+                    for name, param in self.model.named_parameters():
+                        if param.grad.abs().max() > maxgrad:
+                            maxgrad = param.grad.abs().max()
+                            maxparam = param
+                            maxname = name
+                    print(maxname)
+                    print(maxgrad)
+                    print(maxparam.data)
+                    print(maxparam.grad)
+                self.optimizer.step()
                 train_loss += loss.detach().cpu().item()/len(train_dataloader)
             
             self.model.eval()
