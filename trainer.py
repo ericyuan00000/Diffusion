@@ -50,7 +50,7 @@ class Trainer():
                 loss = self.loss_func(pred_epsilon, batch_epsilon)
                 self.optimizer.zero_grad()
                 loss.backward()
-                print(torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0))
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                 self.optimizer.step()
                 train_loss += loss.detach().cpu().item()/len(train_dataloader)
             
