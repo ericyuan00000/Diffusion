@@ -58,10 +58,8 @@ class Trainer():
                             maxgrad = param.grad.abs().max()
                             maxparam = param
                             maxname = name
-                    print(maxname)
-                    print(maxgrad)
-                    print(maxparam.data)
-                    print(maxparam.grad)
+                    print(maxname, maxgrad.item())
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
                 self.optimizer.step()
                 train_loss += loss.detach().cpu().item()/len(train_dataloader)
             
