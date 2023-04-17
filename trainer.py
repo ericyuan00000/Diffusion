@@ -51,14 +51,14 @@ class Trainer():
                 self.optimizer.zero_grad()
                 loss.backward()
                 if verbose:
-                    print(f'(training loss: {loss}, max epsilon: {batch_epsilon.max()}, max prediction: {pred_epsilon.max()})')
+                    print(f'(training loss: {loss:.3f}, max epsilon: {batch_epsilon.max():.3f}, max prediction: {pred_epsilon.max():.3f})')
                     maxgrad, maxparam, maxname = 0, None, None
                     for name, param in self.model.named_parameters():
                         if param.grad.abs().max() > maxgrad:
                             maxgrad = param.grad.abs().max()
                             maxparam = param
                             maxname = name
-                    print(maxname, maxgrad.item())
+                    print(f'{maxname}, {maxgrad.item():.3f}')
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
                 self.optimizer.step()
                 train_loss += loss.detach().cpu().item()/len(train_dataloader)
