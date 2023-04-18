@@ -5,6 +5,7 @@ import random
 from tqdm import tqdm
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 class Trainer():
     def __init__(self, 
@@ -22,7 +23,14 @@ class Trainer():
         self.loss_func = nn.MSELoss()
         self.noise_schedule = noise_schedule    # alpha(t)
         self.save_model = save_model
-        self.save_path = save_path
+        i = 1
+        while True:
+            if f'{save_path}/train_{i:02}' in os.listdir():
+                i += 1
+            else:
+                self.save_path = f'{save_path}/train_{i:02}'
+                os.mkdir(self.save_path)
+                break
         self.loss_log = {'epoch':[], 'train': [], 'val':[]}
 
         
