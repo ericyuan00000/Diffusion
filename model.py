@@ -2,11 +2,11 @@ import torch
 from torch import nn
 
 class Diffusion(nn.Module):
-    def __init__(self, n_layer=9, n_feat=256, n_atomtype=10):
+    def __init__(self, n_layer=9, n_feat=256, atomtype=[1, 6, 7, 8, 9]):
         super(Diffusion, self).__init__()
         self.n_layer = n_layer
         self.n_feat = n_feat
-        self.n_atomtype = n_atomtype
+        self.n_atomtype = len(atomtype)
         self.encode = nn.Linear(self.n_atomtype+1, self.n_feat)
         self.egnn_layers = nn.ModuleList([self.egnn_layer() for l in range(n_layer)])
         self.decode = nn.Linear(self.n_feat, self.n_atomtype)
@@ -40,8 +40,8 @@ class Diffusion(nn.Module):
         return layer
     
     
-    def forward(self, X, Z, K, T):
-        H = self.encode(torch.cat([Z, T], dim=2))   # atomic features, (n_batch, n_atom, n_feat)
+    def forward(self, X, Z, K1, K2, T):
+        H = self.encode(torch.cat([Z, T], dim=2)) * K1   # atomic features, (n_batch, n_atom, n_feat)
 
         n_batch = X.shape[0]
         n_atom = X.shape[1]
@@ -57,13 +57,13 @@ class Diffusion(nn.Module):
                 E[:, :, :, [-1]] = D.norm(dim=3, keepdim=True)**2
 
             MH = layer['feat_message'](E.clone())    # feature messages, (n_batch, n_atom, n_atom, n_feat)
-            WH = layer['feat_weight'](MH) * K[:, :, :, None]    # message weights, (n_batch, n_atom, n_atom, 1)
-            H = layer['feat_update'](torch.cat([H, (MH*WH).sum(dim=2)], dim=2)) + H    # features, (n_batch, n_atom, n_feat)
+            WH = layer['feat_weight'](MH) * K2    # message weights, (n_batch, n_atom, n_atom, 1)
+            H = layer['feat_update'](torch.cat([H, (MH * WH).sum(dim=2)], dim=2)) * K1 + H    # features, (n_batch, n_atom, n_feat)
             
             D = D/(D.norm(dim=3, keepdim=True)+1)
-            WX = layer['coord_weight'](E.clone()) * K[:, :, :, None]    # message weights, (n_batch, n_atom, n_atom, 1)
+            WX = layer['coord_weight'](E.clone()) * K2    # message weights, (n_batch, n_atom, n_atom, 1)
             X = (D * WX).sum(dim=2) + X    # coordinates, (n_batch, n_atom, 3)
         
-        Z = self.decode(H)
+        Z = self.decode(H) * K1
 
-        return torch.cat([X, Z], dim=2)
+        return X, Z
