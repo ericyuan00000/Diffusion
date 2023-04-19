@@ -68,8 +68,6 @@ class Trainer():
                     train_loss.append(loss.item())
                 except:
                     print('RuntimeError: The total norm for gradients is non-finite, so it cannot be clipped.')
-                    print(pred_epsilon)
-                    print(batch_epsilon)
             train_loss = np.mean(train_loss)
             
             self.model.eval()
