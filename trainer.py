@@ -57,13 +57,16 @@ class Trainer():
                 batch_epsilon = torch.randn((n_batch, n_atom, 3+n_atomtype), device=self.device) * batch_K1  # noise
                 batch_X = batch_alpha * batch_X + batch_sigma * batch_epsilon[:, :, 0:3]
                 batch_Z = batch_alpha * batch_Z + batch_sigma * batch_epsilon[:, :, 3:3+n_atomtype]
-                
-                pred_epsilon = torch.cat(self.model.forward(batch_X, batch_Z, batch_K1, batch_K2, batch_t), dim=2)
-                loss = self.loss_func(pred_epsilon, batch_epsilon)
-                self.optimizer.zero_grad()
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0, error_if_nonfinite=True)
-                self.optimizer.step()
+
+                try:
+                    pred_epsilon = torch.cat(self.model.forward(batch_X, batch_Z, batch_K1, batch_K2, batch_t), dim=2)
+                    loss = self.loss_func(pred_epsilon, batch_epsilon)
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0, error_if_nonfinite=True)
+                    self.optimizer.step()
+                except:
+                    print('RuntimeError: The total norm of order 2.0 for gradients from `parameters` is non-finite, so it cannot be clipped.')
                 train_loss += loss.item()/len(train_dataloader)
             
             self.model.eval()
@@ -84,6 +87,7 @@ class Trainer():
                 batch_epsilon = torch.randn((n_batch, n_atom, 3+n_atomtype), device=self.device) * batch_K1  # noise
                 batch_X = batch_alpha * batch_X + batch_sigma * batch_epsilon[:, :, 0:3]
                 batch_Z = batch_alpha * batch_Z + batch_sigma * batch_epsilon[:, :, 3:3+n_atomtype]
+                
                 with torch.no_grad():
                     pred_epsilon = torch.cat(self.model.forward(batch_X, batch_Z, batch_K1, batch_K2, batch_t), dim=2)
                     loss = self.loss_func(pred_epsilon, batch_epsilon)
