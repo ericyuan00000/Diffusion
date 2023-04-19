@@ -9,16 +9,9 @@ class CustomDataset(Dataset):
         n_atomtype = len(atomtype)
         self.Z = torch.zeros((n_sample, n_atom, n_atomtype))    # atom types, (n_sample, n_atom, n_atomtype)
         self.K1 = torch.ones((n_sample, n_atom, 1))    # node masks, (n_sample, n_atom, 1)
-        self.K2 = torch.ones((n_sample, n_atom, n_atom, 1))    # edge masks, (n_sample, n_atom, n_atom, 1)
-        for _sample in range(n_sample):
-            for _atom in range(n_atom):
-                if data['Z'][_sample, _atom, 0]>0:
-                    self.Z[_sample, _atom, atomtype.index(data['Z'][_sample, _atom, 0])] = 1
-                else:
-                    self.K1[_sample, _atom, 0] = 0
-                    self.K2[_sample, _atom, :, 0] = 0
-                    self.K2[_sample, :, _atom, 0] = 0
-                self.K2[_sample, _atom, _atom, 0] = 0
+        self.K1[data['Z']==0] = 0
+        self.K2 = (self.K1 * self.K1.permute(0, 2, 1)).unsqueeze(3)   # edge masks, (n_sample, n_atom, n_atom, 1)
+        self.K2.diagonal(dim1=1, dim2=2).zero_()
         
 
     def __len__(self):
