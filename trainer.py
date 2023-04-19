@@ -27,9 +27,6 @@ class Trainer():
         self.noise_schedule = noise_schedule    # alpha(t)
         self.save_model = save_model
         i = 1
-        print('path check')
-        print(os.listdir())
-        print(os.listdir(save_path))
         while True:
             if f'train_{i:02}' in os.listdir(save_path):
                 i += 1
