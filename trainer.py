@@ -2,8 +2,8 @@ import torch
 from torch import nn
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-import random
 from tqdm import tqdm
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
@@ -40,7 +40,7 @@ class Trainer():
     def train(self, train_dataloader, val_dataloader):
         for epoch in tqdm(range(self.n_epoch)):
             self.model.train()
-            train_loss = 0
+            train_loss = []
             for batch_data in iter(train_dataloader):
                 batch_X = batch_data['X'].to(self.device)    # coordinates, (n_batch, n_atom, 3)
                 batch_Z = batch_data['Z'].to(self.device)    # atom types, (n_batch, n_atom, n_atomtype)
@@ -65,12 +65,15 @@ class Trainer():
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0, error_if_nonfinite=True)
                     self.optimizer.step()
+                    train_loss.append(loss.item())
                 except:
-                    print('RuntimeError: The total norm of order 2.0 for gradients from `parameters` is non-finite, so it cannot be clipped.')
-                train_loss += loss.item()/len(train_dataloader)
+                    print('RuntimeError: The total norm for gradients is non-finite, so it cannot be clipped.')
+                    print(pred_epsilon)
+                    print(batch_epsilon)
+            train_loss = np.mean(train_loss)
             
             self.model.eval()
-            val_loss = 0
+            val_loss = []
             for batch_data in iter(val_dataloader):
                 batch_X = batch_data['X'].to(self.device)    # coordinates, (n_batch, n_atom, 3)
                 batch_Z = batch_data['Z'].to(self.device)    # atom types, (n_batch, n_atom, n_atomtype)
@@ -87,11 +90,12 @@ class Trainer():
                 batch_epsilon = torch.randn((n_batch, n_atom, 3+n_atomtype), device=self.device) * batch_K1  # noise
                 batch_X = batch_alpha * batch_X + batch_sigma * batch_epsilon[:, :, 0:3]
                 batch_Z = batch_alpha * batch_Z + batch_sigma * batch_epsilon[:, :, 3:3+n_atomtype]
-                
+
                 with torch.no_grad():
                     pred_epsilon = torch.cat(self.model.forward(batch_X, batch_Z, batch_K1, batch_K2, batch_t), dim=2)
                     loss = self.loss_func(pred_epsilon, batch_epsilon)
-                val_loss += loss.item()/len(val_dataloader)
+                val_loss.append(loss.item())
+            val_loss = np.mean(val_loss)
 
             print(f'Train loss: {train_loss:.3f} - Val loss: {val_loss:.3f}')
             self.loss_log['epoch'].append(epoch+1)
