@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import OneHotEncoder
+from torch.nn.functional import one_hot
 
 class CustomDataset(Dataset):
     def __init__(self, data, atomtype=[1, 6, 7, 8, 9]):
@@ -10,9 +10,8 @@ class CustomDataset(Dataset):
 
         n_sample = self.X.shape[0]
         n_atom = self.X.shape[1]
-        n_atomtype = len(atomtype)
         self.Z = LabelEncoder().fit([0] + atomtype).transform(data['Z'].flatten()).reshape(n_sample, n_atom)    # atom types, (n_sample, n_atom)
-        self.Z = torch.nn.functional.one_hot(torch.tensor(self.Z, dtype=torch.long))[:, :, 1:].float()    # atom types, (n_sample, n_atom, n_atomtype)
+        self.Z = one_hot(torch.tensor(self.Z, dtype=torch.long))[:, :, 1:].float()    # atom types, (n_sample, n_atom, n_atomtype)
         print(self.Z.shape)
 
         self.K1 = (self.Z>0).any(dim=2).unsqueeze(2)    # node masks, (n_sample, n_atom, 1)
