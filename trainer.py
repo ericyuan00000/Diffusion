@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from torch.optim import Adam
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 import random
 from tqdm import tqdm
 import pandas as pd
@@ -19,13 +20,15 @@ class Trainer():
         self.model = model.to(device)
         self.device = device
         self.optimizer = Adam(model.parameters(), lr=lr)
+        self.scheduler = ReduceLROnPlateau(self.optimizer, verbose=True)
+
         self.n_epoch = n_epoch
         self.loss_func = nn.MSELoss()
         self.noise_schedule = noise_schedule    # alpha(t)
         self.save_model = save_model
         i = 1
         while True:
-            if f'{save_path}/train_{i:02}' in os.listdir():
+            if f'train_{i:02}' in os.listdir(save_path):
                 i += 1
             else:
                 self.save_path = f'{save_path}/train_{i:02}'
@@ -92,13 +95,15 @@ class Trainer():
             self.loss_log['val'].append(val_loss)
 
             if (epoch+1)%self.save_model==0:
-                torch.save(self.model.state_dict(), self.save_path+'/model.pt')
+                torch.save(self.model.state_dict(), f'{self.save_path}/model.pt')
             self.record_loss()
+
+            self.scheduler.step(val_loss)
 
 
     def record_loss(self):
         df = pd.DataFrame(self.loss_log)
-        df.to_csv(self.save_path+'/log.csv', index=False)
+        df.to_csv(f'{self.save_path}/log.csv', index=False)
 
         plt.figure()
         plt.plot(self.loss_log['epoch'], self.loss_log['train'])
@@ -107,5 +112,5 @@ class Trainer():
         plt.xlabel('Epoch')
         plt.ylabel('MSE loss')
         plt.yscale('log')
-        plt.savefig(self.save_path+'/log.svg')
+        plt.savefig(f'{self.save_path}/log.svg')
         plt.close()
