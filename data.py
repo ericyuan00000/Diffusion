@@ -13,16 +13,13 @@ class CustomDataset(Dataset):
         self.Z = LabelEncoder().fit([0] + atomtype).transform(data['Z'].flatten()).reshape(n_sample, n_atom)    # atom types, (n_sample, n_atom)
         self.Z = one_hot(torch.tensor(self.Z, dtype=torch.long))[:, :, 1:].float()    # atom types, (n_sample, n_atom, n_atomtype)
         print(self.Z.shape)
-        print(self.Z)
 
         self.K1 = (self.Z>0).any(dim=2).unsqueeze(2)    # node masks, (n_sample, n_atom, 1)
         print(self.K1.shape)
-        print(self.K1)
 
         self.K2 = (self.K1 * self.K1.permute(0, 2, 1)).unsqueeze(3)   # edge masks, (n_sample, n_atom, n_atom, 1)
         self.K2.diagonal(dim1=1, dim2=2).zero_()
         print(self.K2.shape)
-        print(self.K2)
         
 
     def __len__(self):
