@@ -11,7 +11,7 @@ class Sampler():
                  noise_schedule=lambda t: (1 - 2e-5) * (1 - t**2) + 1e-5,
                  n_step=1000,
                  save_mol=100):
-        self.model = model
+        self.model = model.to(device)
         self.device = device
         self.noise_schedule = noise_schedule
         self.n_step = n_step
