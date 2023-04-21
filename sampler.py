@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from ase import Atoms
 from ase.visualize import view
 
@@ -20,12 +21,9 @@ class Sampler():
     def sample(self, n_sample=1, n_atom=2):
         X = torch.randn((n_sample, n_atom, 3), device=self.device)
         Z = torch.randn((n_sample, n_atom, self.model.n_atomtype), device=self.device)    # atom types, (n_sample, n_atom, n_atomtype)
-        # X = torch.tensor([[[0,0,-0.5],[0,0,0.5]]], dtype=torch.float, device=self.device)
-        # Z = torch.zeros((n_sample, n_atom, self.model.n_atomtype), device=self.device)
-        # Z[:, :, 1] = 1
-        
-        K = torch.ones((n_sample, n_atom, n_atom))    # masks, (n_sample, n_atom, n_atom)
-        K.diagonal(1, 2).zero_()
+        K1 = torch.ones((n_sample, n_atom, 1))    # node masks, (n_sample, n_atom, 1)
+        K2 = torch.ones((n_sample, n_atom, n_atom, 1))    # edge masks, (n_sample, n_atom, n_atom, 1)
+        K2.diagonal(1, 2).zero_()
         
         self.model.eval()
         for _step in range(self.n_step):
@@ -38,14 +36,18 @@ class Sampler():
             alpha_ts = alpha_t / alpha_s
             sigma_ts = torch.sqrt(sigma_t**2 - alpha_ts**2 * sigma_s**2)
             with torch.no_grad():
-                epsilon_t = self.model.forward(X, Z, K, t_t)
+                epsilon_t = torch.cat(self.model.forward(X, Z, K1, K2, t_t), dim=2)
             mu_Q = 1 / alpha_ts * torch.cat([X, Z], dim=2) - sigma_ts**2 / alpha_ts / sigma_t * epsilon_t
             sigma_Q = sigma_ts * sigma_s / sigma_t
             noise = torch.randn((n_sample, n_atom, 3+self.model.n_atomtype), device=self.device)
             XZ = mu_Q + sigma_Q * noise
             X, Z = XZ[:, :, 0:3], XZ[:, :, 3:3+self.model.n_feat]
 
-            if (_step+1)%self.save_mol==0:
+            if _step==0 or (_step+1)%self.save_mol==0:
                 for _sample in range(n_sample):
-                    view(Atoms(positions=X[_sample], numbers=Z[_sample].max(dim=1).indices))
-        return X, Z
+                    positions = X[_sample]
+                    numbers = []
+                    for z in Z[_sample]:
+                        numbers.append(self.model.atomtype[z.argmax()])
+                    view(Atoms(positions=positions, numbers=numbers))
+        return positions, numbers

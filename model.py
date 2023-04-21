@@ -6,7 +6,8 @@ class Diffusion(nn.Module):
         super(Diffusion, self).__init__()
         self.n_layer = n_layer
         self.n_feat = n_feat
-        self.n_atomtype = len(atomtype)
+        self.atomtype = atomtype
+        self.n_atomtype = len(self.atomtype)
         self.encode = nn.Linear(self.n_atomtype+1, self.n_feat)
         self.egnn_layers = nn.ModuleList([self.egnn_layer() for l in range(n_layer)])
         self.decode = nn.Linear(self.n_feat, self.n_atomtype)
