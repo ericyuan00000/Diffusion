@@ -45,7 +45,7 @@ class Sampler():
 
             if _step==0 or (_step+1)%self.save_mol==0:
                 for _sample in range(n_sample):
-                    positions = X[_sample].numpy()
+                    positions = X[_sample].clone().cpu().numpy()
                     numbers = []
                     for z in Z[_sample]:
                         numbers.append(self.model.atomtype[z.argmax()])
