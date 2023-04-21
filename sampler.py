@@ -21,8 +21,8 @@ class Sampler():
     def sample(self, n_sample=1, n_atom=2):
         X = torch.randn((n_sample, n_atom, 3), device=self.device)
         Z = torch.randn((n_sample, n_atom, self.model.n_atomtype), device=self.device)    # atom types, (n_sample, n_atom, n_atomtype)
-        K1 = torch.ones((n_sample, n_atom, 1))    # node masks, (n_sample, n_atom, 1)
-        K2 = torch.ones((n_sample, n_atom, n_atom, 1))    # edge masks, (n_sample, n_atom, n_atom, 1)
+        K1 = torch.ones((n_sample, n_atom, 1), device=self.device)    # node masks, (n_sample, n_atom, 1)
+        K2 = torch.ones((n_sample, n_atom, n_atom, 1), device=self.device)    # edge masks, (n_sample, n_atom, n_atom, 1)
         K2.diagonal(1, 2).zero_()
         
         self.model.eval()
