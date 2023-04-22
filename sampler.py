@@ -38,20 +38,21 @@ class Sampler():
             with torch.no_grad():
                 epsilon_t = torch.cat(self.model.forward(X, Z, K1, K2, t_t), dim=2)
 
-            if _step + 1 < self.n_step:
-                mu_Q = 1 / alpha_ts * torch.cat([X, Z], dim=2) - sigma_ts**2 / alpha_ts / sigma_t * epsilon_t
-                sigma_Q = sigma_ts * sigma_s / sigma_t
-                noise = torch.randn((n_sample, n_atom, 3+self.model.n_atomtype), device=self.device)
-                XZ = mu_Q + sigma_Q * noise
-            else:
-                XZ = 1 / alpha_t * torch.cat([X, Z], dim=2) - sigma_t / alpha_t * epsilon_t
+            mu_Q = 1 / alpha_ts * torch.cat([X, Z], dim=2) - sigma_ts**2 / alpha_ts / sigma_t * epsilon_t
+            sigma_Q = sigma_ts * sigma_s / sigma_t
+            noise = torch.randn((n_sample, n_atom, 3+self.model.n_atomtype), device=self.device)
+            XZ = mu_Q + sigma_Q * noise
             X, Z = XZ[:, :, 0:3], XZ[:, :, 3:3+self.model.n_feat]
 
             if _step==0 or (_step+1)%self.save_mol==0:
+                with torch.no_grad():
+                    epsilon_s = torch.cat(self.model.forward(X, Z, K1, K2, t_s), dim=2)
+                XZ_final = 1 / alpha_s * torch.cat(XZ, dim=2) - sigma_s / alpha_s * epsilon_s
+                X_final, Z_final = XZ_final[:, :, 0:3], XZ_final[:, :, 3:3+self.model.n_feat]
                 for _sample in range(n_sample):
-                    positions = list(X[_sample].tolist())
+                    positions = list(X_final[_sample].tolist())
                     numbers = []
-                    for z in Z[_sample]:
+                    for z in Z_final[_sample]:
                         numbers.append(self.model.atomtype[z.argmax()])
                     # view(Atoms(positions=positions, numbers=numbers))
                     print('Step', _step)
