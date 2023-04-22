@@ -27,7 +27,7 @@ class Sampler():
         
         self.model.eval()
         for _step in range(self.n_step):
-            t_t = (1 - _step /self. n_step) * torch.ones((n_sample, n_atom, 1), device=self.device)
+            t_t = (1 - _step / self.n_step) * torch.ones((n_sample, n_atom, 1), device=self.device)
             t_s = (1 - (_step + 1) / self.n_step) * torch.ones((n_sample, n_atom, 1), device=self.device)
             alpha_t = self.noise_schedule(t_t)
             sigma_t = torch.sqrt(1 - alpha_t**2)
@@ -45,12 +45,13 @@ class Sampler():
 
             if _step==0 or (_step+1)%self.save_mol==0:
                 for _sample in range(n_sample):
-                    positions = X[_sample].clone().cpu().numpy()
+                    positions = list(X[_sample].tolist())
                     numbers = []
                     for z in Z[_sample]:
                         numbers.append(self.model.atomtype[z.argmax()])
                     # view(Atoms(positions=positions, numbers=numbers))
-                    print(_step)
-                    print(positions)
-                    print(numbers)
+                    print('Step', _step)
+                    print('positions =', positions)
+                    print('numbers =', numbers)
+                    print(Z[_sample])
         return positions, numbers
