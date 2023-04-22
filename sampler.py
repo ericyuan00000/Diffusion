@@ -38,7 +38,7 @@ class Sampler():
             with torch.no_grad():
                 epsilon_t = torch.cat(self.model.forward(X, Z, K1, K2, t_t), dim=2)
 
-            if t_s > 0:
+            if _step + 1 < self.n_step:
                 mu_Q = 1 / alpha_ts * torch.cat([X, Z], dim=2) - sigma_ts**2 / alpha_ts / sigma_t * epsilon_t
                 sigma_Q = sigma_ts * sigma_s / sigma_t
                 noise = torch.randn((n_sample, n_atom, 3+self.model.n_atomtype), device=self.device)
