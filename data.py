@@ -4,17 +4,20 @@ from sklearn.preprocessing import LabelEncoder
 from torch.nn.functional import one_hot
 
 class CustomDataset(Dataset):
-    def __init__(self, data, atomtype=[1, 6, 7, 8, 9]):
+    def __init__(self, data, n_atomtype=10, Zonehot_scale=1, Zcharge_scale=1):
         self.X = torch.tensor(data['R'], dtype=torch.float)
+        self.X_scale = data['R'][data['R'].nonzero()].std()
+        self.X = self.X / self.X_scale
         print(self.X.shape)
 
-        n_sample = self.X.shape[0]
-        n_atom = self.X.shape[1]
-        self.Z = LabelEncoder().fit([0] + atomtype).transform(data['Z'].flatten()).reshape(n_sample, n_atom)    # atom types, (n_sample, n_atom)
-        self.Z = one_hot(torch.tensor(self.Z, dtype=torch.long))[:, :, 1:].float()    # atom types, (n_sample, n_atom, n_atomtype)
+        self.Zonehot = one_hot(torch.tensor(data['Z'], dtype=torch.long), num_classes=n_atomtype).float()    # atom types, (n_sample, n_atom, n_atomtype)
+        self.Zcharge = torch.tensor(data['Z'], dtype=torch.float).unsqueeze(2)    # atom types, (n_sample, n_atom, 1)
+        self.Zonehot_scale = Zonehot_scale
+        self.Zcharge_scale = Zcharge_scale
+        self.Z = torch.cat([self.Zonehot * self.Zonehot_scale, self.Zcharge * self.Zcharge_scale], dim=2)    # atom types, (n_sample, n_atom, n_atomtype+1)
         print(self.Z.shape)
 
-        self.K1 = (self.Z>0).any(dim=2).unsqueeze(2)    # node masks, (n_sample, n_atom, 1)
+        self.K1 = torch.tensor(data['Z'] > 0).unsqueeze(2)    # node masks, (n_sample, n_atom, 1)
         print(self.K1.shape)
 
         self.K2 = (self.K1 * self.K1.permute(0, 2, 1)).unsqueeze(3)   # edge masks, (n_sample, n_atom, n_atom, 1)

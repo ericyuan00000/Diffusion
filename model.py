@@ -2,13 +2,12 @@ import torch
 from torch import nn
 
 class Diffusion(nn.Module):
-    def __init__(self, n_layer=9, n_feat=256, atomtype=[1, 6, 7, 8, 9]):
+    def __init__(self, n_layer=9, n_feat=256, n_atomtype=10):
         super(Diffusion, self).__init__()
         self.n_layer = n_layer
         self.n_feat = n_feat
-        self.atomtype = atomtype
-        self.n_atomtype = len(self.atomtype)
-        self.encode = nn.Linear(self.n_atomtype+1, self.n_feat)
+        self.n_atomtype = n_atomtype
+        self.encode = nn.Linear(self.n_atomtype+1+1, self.n_feat)
         self.egnn_layers = nn.ModuleList([self.egnn_layer() for l in range(n_layer)])
         self.decode = nn.Linear(self.n_feat, self.n_atomtype)
         
