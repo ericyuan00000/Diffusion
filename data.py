@@ -19,7 +19,7 @@ class CustomDataset(Dataset):
         self.Z = torch.cat([self.Zonehot * self.Zonehot_scale, self.Zcharge * self.Zcharge_scale], dim=2)    # atom types, (n_sample, n_atom, n_atomtype+1)
         print(self.Z.shape)
 
-        self.K1 = torch.tensor(data['Z'] > 0).unsqueeze(2)    # node masks, (n_sample, n_atom, 1)
+        self.K1 = torch.tensor(data['Z'] > 0)    # node masks, (n_sample, n_atom, 1)
         print(self.K1.shape)
 
         self.K2 = (self.K1 * self.K1.permute(0, 2, 1)).unsqueeze(3)   # edge masks, (n_sample, n_atom, n_atom, 1)
