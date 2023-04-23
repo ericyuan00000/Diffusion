@@ -9,7 +9,7 @@ class Diffusion(nn.Module):
         self.n_atomtype = n_atomtype
         self.encode = nn.Linear(self.n_atomtype+1+1, self.n_feat)
         self.egnn_layers = nn.ModuleList([self.egnn_layer() for l in range(n_layer)])
-        self.decode = nn.Linear(self.n_feat, self.n_atomtype)
+        self.decode = nn.Linear(self.n_feat, self.n_atomtype+1)
         
         
     def egnn_layer(self):
