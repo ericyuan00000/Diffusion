@@ -8,13 +8,13 @@ class Sampler():
     def __init__(self, 
                  model, 
                  device,
+                 time_schedule=np.linspace(1, 0, 1000),
                  noise_schedule=lambda t: (1 - 2e-5) * (1 - t**2) + 1e-5,
-                 n_step=1000,
                  save_mol=100):
         self.model = model.to(device)
         self.device = device
+        self.time_schedule = time_schedule
         self.noise_schedule = noise_schedule
-        self.n_step = n_step
         self.save_mol = save_mol
 
     
@@ -26,9 +26,9 @@ class Sampler():
         K2.diagonal(1, 2).zero_()
         
         self.model.eval()
-        for _step in range(self.n_step):
-            t_t = (1 - _step / self.n_step) * torch.ones((n_sample, n_atom, 1), device=self.device)
-            t_s = (1 - (_step + 1) / self.n_step) * torch.ones((n_sample, n_atom, 1), device=self.device)
+        for step in range(len(self.time_schedule) - 1):
+            t_t = self.time_schedule[step] * torch.ones((n_sample, n_atom, 1), device=self.device)
+            t_s = self.time_schedule[step + 1] * torch.ones((n_sample, n_atom, 1), device=self.device)
             alpha_t = self.noise_schedule(t_t)
             sigma_t = torch.sqrt(1 - alpha_t**2)
             alpha_s = self.noise_schedule(t_s)
@@ -44,18 +44,16 @@ class Sampler():
             XZ = mu_Q + sigma_Q * noise
             X, Z = XZ[:, :, 0:3], XZ[:, :, 3:3+self.model.n_feat]
 
-            if _step==0 or (_step+1)%self.save_mol==0:
+            if step==0 or (step+1)%self.save_mol==0:
                 with torch.no_grad():
                     epsilon_s = torch.cat(self.model.forward(X, Z, K1, K2, t_s), dim=2)
-                XZ_final = 1 / alpha_s * torch.cat(XZ, dim=2) - sigma_s / alpha_s * epsilon_s
+                XZ_final = 1 / alpha_s * XZ - sigma_s / alpha_s * epsilon_s
                 X_final, Z_final = XZ_final[:, :, 0:3], XZ_final[:, :, 3:3+self.model.n_feat]
                 for _sample in range(n_sample):
                     positions = list(X_final[_sample].tolist())
-                    numbers = []
-                    for z in Z_final[_sample]:
-                        numbers.append(self.model.atomtype[z.argmax()])
+                    numbers = [self.model.atomtype[z.argmax()] for z in Z_final[_sample]]
                     # view(Atoms(positions=positions, numbers=numbers))
-                    print('Step', _step+1)
+                    print('Step', step+1)
                     print('positions =', positions)
                     print('numbers =', numbers)
         return positions, numbers
