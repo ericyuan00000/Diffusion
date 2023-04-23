@@ -10,8 +10,10 @@ class CustomDataset(Dataset):
         self.X = self.X / self.X_scale
         print(self.X.shape)
 
-        self.Zonehot = one_hot(torch.tensor(data['Z'], dtype=torch.long), num_classes=n_atomtype).float()    # atom types, (n_sample, n_atom, n_atomtype)
-        self.Zcharge = torch.tensor(data['Z'], dtype=torch.float).unsqueeze(2)    # atom types, (n_sample, n_atom, 1)
+        self.Zonehot = one_hot(torch.tensor(data['Z'].squeeze(), dtype=torch.long), num_classes=n_atomtype).float()    # atom types, (n_sample, n_atom, n_atomtype)
+        print(self.Zonehot.shape)
+        self.Zcharge = torch.tensor(data['Z'], dtype=torch.float)    # atom types, (n_sample, n_atom, 1)
+        print(self.Zcharge.shape)
         self.Zonehot_scale = Zonehot_scale
         self.Zcharge_scale = Zcharge_scale
         self.Z = torch.cat([self.Zonehot * self.Zonehot_scale, self.Zcharge * self.Zcharge_scale], dim=2)    # atom types, (n_sample, n_atom, n_atomtype+1)
