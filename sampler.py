@@ -55,7 +55,7 @@ class Sampler():
                     for z in Z_final[_sample]:
                         numbers.append(self.model.atomtype[z.argmax()])
                     # view(Atoms(positions=positions, numbers=numbers))
-                    print('Step', _step)
+                    print('Step', _step+1)
                     print('positions =', positions)
                     print('numbers =', numbers)
         return positions, numbers
