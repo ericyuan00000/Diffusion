@@ -38,6 +38,33 @@ class Trainer():
 
         
     def train(self, train_dataloader, val_dataloader):
+        self.model.eval()
+        val_loss = []
+        for batch_data in iter(val_dataloader):
+            batch_X = batch_data['X'].to(self.device)    # coordinates, (n_batch, n_atom, 3)
+            batch_Z = batch_data['Z'].to(self.device)    # atom types, (n_batch, n_atom, n_atomtype)
+            batch_K1 = batch_data['K1'].to(self.device)    # node masks, (n_batch, n_atom, 1)
+            batch_K2 = batch_data['K2'].to(self.device)    # node masks, (n_batch, n_atom, n_atom)
+
+            n_batch = batch_X.shape[0]
+            n_atom = batch_X.shape[1]
+            n_atomfeat = batch_Z.shape[2]
+
+            batch_t = torch.rand(1, device=self.device).tile((n_batch, n_atom, 1))
+            batch_alpha = self.noise_schedule(batch_t)  # alpha(t), weight of data
+            batch_sigma = torch.sqrt(1 - batch_alpha**2)  # sigma(t), weight of noise
+            batch_epsilon = torch.randn((n_batch, n_atom, 3+n_atomfeat), device=self.device) * batch_K1  # noise
+            batch_X = batch_alpha * batch_X + batch_sigma * batch_epsilon[:, :, 0:3]
+            batch_Z = batch_alpha * batch_Z + batch_sigma * batch_epsilon[:, :, 3:3+n_atomfeat]
+
+            with torch.no_grad():
+                pred_epsilon = torch.cat(self.model.forward(batch_X, batch_Z, batch_K1, batch_K2, batch_t), dim=2)
+                loss = self.loss_func(pred_epsilon, batch_epsilon)
+            val_loss.append(loss.item())
+        val_loss = np.mean(val_loss)
+
+        print(f'No train - Val loss: {val_loss:.3f}')
+
         for epoch in tqdm(range(self.n_epoch)):
             self.model.train()
             train_loss = []

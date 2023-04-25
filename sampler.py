@@ -20,7 +20,7 @@ class Sampler():
     
     def sample(self, n_sample=1, n_atom=2):
         X = torch.randn((n_sample, n_atom, 3), device=self.device)
-        Z = torch.randn((n_sample, n_atom, self.model.n_atomtype), device=self.device)    # atom types, (n_sample, n_atom, n_atomtype)
+        Z = torch.randn((n_sample, n_atom, self.model.n_atomtype+1), device=self.device)    # atom types, (n_sample, n_atom, n_atomtype)
         K1 = torch.ones((n_sample, n_atom, 1), device=self.device)    # node masks, (n_sample, n_atom, 1)
         K2 = torch.ones((n_sample, n_atom, n_atom, 1), device=self.device)    # edge masks, (n_sample, n_atom, n_atom, 1)
         K2.diagonal(1, 2).zero_()
@@ -41,16 +41,19 @@ class Sampler():
 
                 mu_Q = 1 / alpha_ts * torch.cat([X, Z], dim=2) - sigma_ts**2 / alpha_ts / sigma_t * epsilon_t
                 sigma_Q = sigma_ts * sigma_s / sigma_t
-                noise = torch.randn((n_sample, n_atom, 3+self.model.n_atomtype), device=self.device)
+                noise = torch.randn((n_sample, n_atom, 3+self.model.n_atomtype+1), device=self.device)
                 XZ = mu_Q + sigma_Q * noise
-                X, Z = XZ[:, :, 0:3], XZ[:, :, 3:3+self.model.n_feat]
+                X, Z = XZ[:, :, :3], XZ[:, :, 3:]
+                # X = X - X.mean(dim=1)
 
                 if step==0 or (step+1)%self.save_mol==0:
-                    for _sample in range(n_sample):
-                        positions = X[_sample].tolist()
-                        numbers = [self.model.atomtype[z.argmax()] for z in Z[_sample]]
+                    print('Schedule', schedule + 1, 'Step', step + 1)
+                    for sample in range(n_sample):
+                        positions = (X[sample] * 1.7227699310066193).tolist()
+                        numbers_onehot = Z[sample][:, :-1].argmax(dim=1).tolist()
+                        numbers_charge = Z[sample][:, -1].round().int().tolist()
                         # view(Atoms(positions=positions, numbers=numbers))
-                        print('Schedule', schedule + 1, 'Step', step + 1)
                         print('positions =', positions)
-                        print('numbers =', numbers)
-        return positions, numbers
+                        print('numbers =', numbers_onehot)
+                        # print('numbers =', numbers_charge)
+        return positions, numbers_charge

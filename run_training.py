@@ -11,9 +11,9 @@ val_data = np.load('/global/scratch/users/ericyuan/QM9/QM9_val.npz')
 model = Diffusion(n_layer=9, n_feat=256, n_atomtype=10)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-train_dataset = CustomDataset(train_data, n_atomtype=10, Zonehot_scale=0.25, Zcharge_scale=0.1)
+train_dataset = CustomDataset(train_data, n_atomtype=10, Zonehot_scale=2, Zcharge_scale=2)
 train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True, drop_last=True)
-val_dataset = CustomDataset(val_data, n_atomtype=10, Zonehot_scale=0.25, Zcharge_scale=0.1)
+val_dataset = CustomDataset(val_data, n_atomtype=10, Zonehot_scale=2, Zcharge_scale=2)
 val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=64, shuffle=True, drop_last=True)
 
 trainer = Trainer(model, lr=1.0e-4, n_epoch=1000, save_model=20, save_path='output_qm9', device=device)
